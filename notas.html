@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>Mis Notas</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #f7f5f0;
+  --surface: #ffffff;
+  --surface-alt: #f0ede6;
+  --border: #e2ddd5;
+  --accent: #3d6b4f;
+  --accent-light: #6a9e7f;
+  --accent-bg: #e8f2ec;
+  --text: #1e1e1e;
+  --text-muted: #7a7068;
+  --text-light: #b0a89e;
+  --danger: #b94040;
+  --shadow: 0 2px 16px rgba(0,0,0,0.07);
+  --radius: 12px;
+  --sidebar-w: 260px;
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body { background:var(--bg); font-family:'DM Sans',sans-serif; color:var(--text); height:100vh; display:flex; flex-direction:column; overflow:hidden; font-size:14px; }
+
+/* ── HEADER ── */
+#header {
+  background:var(--surface); border-bottom:1px solid var(--border);
+  padding:10px 16px; display:flex; align-items:center; gap:10px;
+  box-shadow:var(--shadow); z-index:100; flex-shrink:0;
+}
+#logo {
+  font-family:'Lora',serif; font-size:18px; font-weight:600;
+  color:var(--accent); letter-spacing:-0.3px; flex:1;
+}
+#logo span { font-weight:400; color:var(--text-muted); font-size:13px; margin-left:6px; font-family:'DM Sans',sans-serif; }
+.hbtn {
+  padding:6px 12px; border-radius:8px; border:1px solid var(--border);
+  background:var(--surface-alt); color:var(--text-muted);
+  font-family:'DM Sans',sans-serif; font-size:13px; cursor:pointer;
+  transition:all .15s; white-space:nowrap;
+}
+.hbtn:hover { background:var(--accent-bg); color:var(--accent); border-color:var(--accent-light); }
+.hbtn.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+.hbtn.primary:hover { background:#2e5540; }
+.hbtn.danger { color:var(--danger); border-color:var(--danger); }
+.hbtn.danger:hover { background:#fdf0f0; }
+
+/* ── LAYOUT ── */
+#app { display:flex; flex:1; overflow:hidden; }
+
+/* ── SIDEBAR ── */
+#sidebar {
+  width:var(--sidebar-w); background:var(--surface);
+  border-right:1px solid var(--border); display:flex; flex-direction:column;
+  flex-shrink:0; overflow:hidden; transition:width .25s;
+}
+#sidebar.collapsed { width:0; }
+#sidebar-top { padding:12px; border-bottom:1px solid var(--border); }
+#search-notes {
+  width:100%; padding:7px 10px; border-radius:8px;
+  border:1px solid var(--border); background:var(--surface-alt);
+  font-family:'DM Sans',sans-serif; font-size:13px; color:var(--text);
+  outline:none; transition:border-color .2s;
+}
+#search-notes:focus { border-color:var(--accent); }
+#sidebar-sections { flex:1; overflow-y:auto; padding:8px 0; }
+.sidebar-section { padding:4px 0; }
+.sidebar-section-title {
+  padding:4px 12px; font-size:10px; letter-spacing:2px;
+  color:var(--text-light); font-weight:600; text-transform:uppercase;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.sidebar-section-title button {
+  background:none; border:none; color:var(--accent); cursor:pointer;
+  font-size:16px; line-height:1; padding:0 2px;
+}
+.sidebar-item {
+  display:flex; align-items:center; gap:8px;
+  padding:7px 12px; cursor:pointer; border-radius:0;
+  transition:background .12s; color:var(--text-muted); font-size:13px;
+  border:none; background:none; width:100%; text-align:left;
+}
+.sidebar-item:hover { background:var(--surface-alt); }
+.sidebar-item.active { background:var(--accent-bg); color:var(--accent); font-weight:500; }
+.sidebar-item .icon { font-size:15px; flex-shrink:0; }
+.sidebar-item .label { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sidebar-item .count {
+  font-size:11px; background:var(--surface-alt); color:var(--text-light);
+  padding:1px 6px; border-radius:10px;
+}
+.sidebar-item.active .count { background:var(--accent-light); color:#fff; }
+
+/* ── NOTE LIST ── */
+#note-list-panel {
+  width:240px; border-right:1px solid var(--border);
+  background:var(--surface-alt); display:flex; flex-direction:column;
+  flex-shrink:0; overflow:hidden;
+}
+#note-list-header {
+  padding:10px 12px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:8px;
+  background:var(--surface);
+}
+#note-list-title { font-size:13px; font-weight:600; flex:1; color:var(--text); }
+#btn-new-note {
+  width:28px; height:28px; border-radius:7px; border:none;
+  background:var(--accent); color:#fff; font-size:18px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; line-height:1;
+  flex-shrink:0;
+}
+#note-list { flex:1; overflow-y:auto; }
+.note-item {
+  padding:10px 12px; border-bottom:1px solid var(--border);
+  cursor:pointer; transition:background .12s;
+}
+.note-item:hover { background:var(--bg); }
+.note-item.active { background:var(--surface); border-left:3px solid var(--accent); }
+.note-item-title { font-size:13px; font-weight:500; color:var(--text); margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.note-item-preview { font-size:11px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.note-item-meta { font-size:10px; color:var(--text-light); margin-top:4px; display:flex; gap:6px; align-items:center; }
+.note-tag-dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
+#note-list-empty { padding:24px 12px; text-align:center; color:var(--text-light); font-size:12px; }
+
+/* ── EDITOR ── */
+#editor-panel { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+#editor-empty {
+  flex:1; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; color:var(--text-light); gap:12px;
+}
+#editor-empty .big { font-size:48px; }
+#editor-empty p { font-size:13px; }
+
+#editor-meta {
+  padding:10px 16px 8px; border-bottom:1px solid var(--border);
+  background:var(--surface); display:none;
+}
+#note-title-input {
+  width:100%; border:none; outline:none; font-family:'Lora',serif;
+  font-size:20px; font-weight:600; color:var(--text); background:transparent;
+  margin-bottom:6px;
+}
+#note-title-input::placeholder { color:var(--text-light); }
+#note-meta-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+#note-date { font-size:11px; color:var(--text-light); }
+#note-folder-sel {
+  font-size:11px; padding:2px 8px; border-radius:6px;
+  border:1px solid var(--border); background:var(--surface-alt);
+  color:var(--text-muted); outline:none; font-family:'DM Sans',sans-serif;
+  cursor:pointer;
+}
+#note-tags-area { display:flex; align-items:center; gap:4px; flex-wrap:wrap; }
+.note-tag {
+  font-size:11px; padding:2px 8px; border-radius:10px;
+  background:var(--accent-bg); color:var(--accent); cursor:pointer;
+}
+.note-tag:hover { background:var(--accent); color:#fff; }
+#add-tag-btn {
+  font-size:11px; padding:2px 7px; border-radius:10px;
+  border:1px dashed var(--border); background:none; color:var(--text-light);
+  cursor:pointer; font-family:'DM Sans',sans-serif;
+}
+#add-tag-btn:hover { border-color:var(--accent); color:var(--accent); }
+
+/* ── TOOLBAR ── */
+#toolbar {
+  padding:6px 12px; border-bottom:1px solid var(--border);
+  background:var(--surface); display:none; flex-wrap:wrap; gap:2px;
+  align-items:center;
+}
+.tb-btn {
+  width:30px; height:28px; border-radius:6px; border:none;
+  background:transparent; color:var(--text-muted); cursor:pointer;
+  font-size:13px; display:flex; align-items:center; justify-content:center;
+  transition:all .12s; font-family:'DM Sans',sans-serif; font-weight:500;
+}
+.tb-btn:hover { background:var(--surface-alt); color:var(--text); }
+.tb-btn.active { background:var(--accent-bg); color:var(--accent); }
+.tb-sep { width:1px; height:20px; background:var(--border); margin:0 3px; }
+.tb-select {
+  height:28px; padding:0 6px; border-radius:6px;
+  border:1px solid var(--border); background:var(--surface-alt);
+  font-family:'DM Sans',sans-serif; font-size:12px; color:var(--text-muted);
+  outline:none; cursor:pointer;
+}
+.tb-color { width:24px; height:24px; border-radius:4px; border:1px solid var(--border); cursor:pointer; padding:0; }
+
+/* ── CONTENT EDITABLE ── */
+#editor-content {
+  flex:1; overflow-y:auto; padding:20px 24px;
+  font-family:'Lora',serif; font-size:15px; line-height:1.8;
+  color:var(--text); outline:none; background:var(--surface);
+}
+#editor-content:empty::before {
+  content:attr(data-placeholder); color:var(--text-light); pointer-events:none;
+}
+#editor-content h1 { font-size:24px; margin:16px 0 8px; color:var(--text); font-weight:600; }
+#editor-content h2 { font-size:20px; margin:14px 0 6px; }
+#editor-content h3 { font-size:17px; margin:12px 0 4px; }
+#editor-content ul, #editor-content ol { padding-left:24px; margin:6px 0; }
+#editor-content li { margin:3px 0; }
+#editor-content blockquote {
+  border-left:3px solid var(--accent-light); padding:6px 14px;
+  margin:8px 0; color:var(--text-muted); font-style:italic;
+  background:var(--accent-bg); border-radius:0 8px 8px 0;
+}
+#editor-content hr { border:none; border-top:1px solid var(--border); margin:16px 0; }
+#editor-content a { color:var(--accent); }
+#editor-content pre {
+  background:var(--surface-alt); border-radius:8px; padding:12px;
+  font-family:monospace; font-size:13px; overflow-x:auto; margin:8px 0;
+}
+
+/* ── STATUS BAR ── */
+#status-bar {
+  padding:4px 16px; background:var(--surface); border-top:1px solid var(--border);
+  font-size:11px; color:var(--text-light); display:none;
+  justify-content:space-between; align-items:center; flex-shrink:0;
+}
+
+/* ── MODALS ── */
+.modal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,.35);
+  display:none; align-items:center; justify-content:center; z-index:1000;
+  backdrop-filter:blur(2px);
+}
+.modal-overlay.open { display:flex; }
+.modal {
+  background:var(--surface); border-radius:16px; padding:0;
+  width:90%; max-width:380px; box-shadow:0 20px 60px rgba(0,0,0,.2);
+  overflow:hidden;
+}
+.modal-header {
+  padding:14px 18px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.modal-title { font-family:'Lora',serif; font-size:16px; font-weight:600; color:var(--text); }
+.modal-close { background:none; border:none; font-size:18px; color:var(--text-muted); cursor:pointer; }
+.modal-body { padding:16px 18px; }
+.modal-body input, .modal-body select {
+  width:100%; padding:8px 10px; border-radius:8px;
+  border:1px solid var(--border); background:var(--surface-alt);
+  font-family:'DM Sans',sans-serif; font-size:13px; color:var(--text);
+  outline:none; margin-top:4px; margin-bottom:12px;
+}
+.modal-body input:focus { border-color:var(--accent); }
+.modal-label { font-size:12px; color:var(--text-muted); font-weight:500; }
+.modal-row { display:flex; gap:8px; margin-top:4px; }
+
+/* ── EXPORT MENU ── */
+#export-menu {
+  position:fixed; right:16px; top:54px;
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:12px; padding:8px; box-shadow:var(--shadow);
+  z-index:500; display:none; min-width:180px;
+}
+#export-menu.open { display:block; }
+.export-item {
+  display:flex; align-items:center; gap:10px;
+  padding:8px 10px; border-radius:8px; cursor:pointer;
+  font-size:13px; color:var(--text-muted); transition:background .12s;
+  border:none; background:none; width:100%; text-align:left;
+  font-family:'DM Sans',sans-serif;
+}
+.export-item:hover { background:var(--surface-alt); color:var(--text); }
+
+/* ── TOAST ── */
+#toast {
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+  background:#1e1e1e; color:#fff; padding:10px 18px; border-radius:10px;
+  font-size:13px; z-index:9999; opacity:0; transition:opacity .3s;
+  pointer-events:none; white-space:nowrap;
+}
+
+/* ── MOBILE TOGGLE ── */
+#sidebar-toggle {
+  display:none; background:none; border:none; font-size:20px;
+  color:var(--text-muted); cursor:pointer; padding:4px;
+}
+
+@media (max-width: 700px) {
+  #sidebar { position:fixed; left:0; top:0; bottom:0; z-index:200; width:260px; transform:translateX(-100%); transition:transform .25s; box-shadow:4px 0 20px rgba(0,0,0,.12); }
+  #sidebar.mobile-open { transform:translateX(0); }
+  #note-list-panel { width:100%; position:fixed; left:0; top:52px; bottom:0; z-index:150; display:none; }
+  #note-list-panel.mobile-open { display:flex; }
+  #editor-panel { width:100%; }
+  #sidebar-toggle { display:block; }
+  #editor-meta { padding:8px 12px 6px; }
+  #editor-content { padding:14px 16px; }
+  #logo span { display:none; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="header">
+  <button id="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+  <div id="logo">Mis Notas <span id="save-status"></span></div>
+  <button class="hbtn" onclick="toggleExportMenu()" id="btn-export">↓ Exportar</button>
+  <button class="hbtn danger" id="btn-delete-note" onclick="deleteCurrentNote()" style="display:none">🗑</button>
+</div>
+
+<!-- EXPORT MENU -->
+<div id="export-menu">
+  <button class="export-item" onclick="exportAs('txt')">📄 Texto plano (.txt)</button>
+  <button class="export-item" onclick="exportAs('html')">🌐 Página web (.html)</button>
+  <button class="export-item" onclick="exportAs('md')">📝 Markdown (.md)</button>
+  <button class="export-item" onclick="exportAs('pdf')">🖨️ Imprimir / PDF</button>
+</div>
+
+<!-- APP -->
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div id="sidebar-top">
+      <input id="search-notes" type="search" placeholder="🔍 Buscar notas..." oninput="renderNoteList()"/>
+    </div>
+    <div id="sidebar-sections">
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">VISTAS</div>
+        <button class="sidebar-item active" id="filter-all" onclick="setFilter('all',this)">
+          <span class="icon">📋</span><span class="label">Todas las notas</span>
+          <span class="count" id="count-all">0</span>
+        </button>
+        <button class="sidebar-item" id="filter-recent" onclick="setFilter('recent',this)">
+          <span class="icon">🕐</span><span class="label">Recientes</span>
+        </button>
+        <button class="sidebar-item" id="filter-starred" onclick="setFilter('starred',this)">
+          <span class="icon">⭐</span><span class="label">Destacadas</span>
+          <span class="count" id="count-starred">0</span>
+        </button>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">
+          CARPETAS
+          <button onclick="newFolder()" title="Nueva carpeta">＋</button>
+        </div>
+        <div id="folder-list"></div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">ETIQUETAS</div>
+        <div id="tag-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTE LIST -->
+  <div id="note-list-panel">
+    <div id="note-list-header">
+      <span id="note-list-title">Todas las notas</span>
+      <button id="btn-new-note" onclick="newNote()" title="Nueva nota">＋</button>
+    </div>
+    <div id="note-list">
+      <div id="note-list-empty">No hay notas aún</div>
+    </div>
+  </div>
+
+  <!-- EDITOR -->
+  <div id="editor-panel">
+    <div id="editor-empty">
+      <div class="big">📝</div>
+      <p>Selecciona una nota o crea una nueva</p>
+      <button class="hbtn primary" onclick="newNote()">＋ Nueva nota</button>
+    </div>
+
+    <div id="editor-meta">
+      <input id="note-title-input" type="text" placeholder="Título de la nota..." oninput="autoSave()"/>
+      <div id="note-meta-row">
+        <span id="note-date"></span>
+        <select id="note-folder-sel" onchange="autoSave()">
+          <option value="">Sin carpeta</option>
+        </select>
+        <div id="note-tags-area"></div>
+        <button id="add-tag-btn" onclick="promptAddTag()">＋ Etiqueta</button>
+        <button id="star-btn" onclick="toggleStar()" style="background:none;border:none;font-size:16px;cursor:pointer;padding:0 2px;" title="Destacar">☆</button>
+      </div>
+    </div>
+
+    <div id="toolbar">
+      <!-- Text style -->
+      <select class="tb-select" onchange="formatBlock(this.value);this.value=''" title="Estilo de párrafo">
+        <option value="">Párrafo</option>
+        <option value="h1">Título 1</option>
+        <option value="h2">Título 2</option>
+        <option value="h3">Título 3</option>
+        <option value="pre">Código</option>
+        <option value="blockquote">Cita</option>
+      </select>
+      <div class="tb-sep"></div>
+      <button class="tb-btn" onclick="exec('bold')" title="Negrita"><b>B</b></button>
+      <button class="tb-btn" onclick="exec('italic')" title="Cursiva"><i>I</i></button>
+      <button class="tb-btn" onclick="exec('underline')" title="Subrayado" style="text-decoration:underline">U</button>
+      <button class="tb-btn" onclick="exec('strikeThrough')" title="Tachado" style="text-decoration:line-through">S</button>
+      <div class="tb-sep"></div>
+      <button class="tb-btn" onclick="exec('insertUnorderedList')" title="Lista">≡</button>
+      <button class="tb-btn" onclick="exec('insertOrderedList')" title="Lista numerada">1.</button>
+      <div class="tb-sep"></div>
+      <button class="tb-btn" onclick="exec('justifyLeft')" title="Izquierda">⬤⬤⬤</button>
+      <button class="tb-btn" onclick="exec('justifyCenter')" title="Centrar">☰</button>
+      <button class="tb-btn" onclick="exec('justifyRight')" title="Derecha">≡</button>
+      <div class="tb-sep"></div>
+      <button class="tb-btn" onclick="exec('insertHorizontalRule')" title="Línea">—</button>
+      <button class="tb-btn" onclick="insertLink()" title="Enlace">🔗</button>
+      <div class="tb-sep"></div>
+      <input type="color" class="tb-color" title="Color de texto" onchange="exec('foreColor',this.value)" value="#1e1e1e"/>
+      <input type="color" class="tb-color" title="Color de fondo" onchange="exec('hiliteColor',this.value)" value="#ffffff"/>
+      <div class="tb-sep"></div>
+      <button class="tb-btn" onclick="exec('undo')" title="Deshacer">↩</button>
+      <button class="tb-btn" onclick="exec('redo')" title="Rehacer">↪</button>
+    </div>
+
+    <div id="editor-content" contenteditable="true" data-placeholder="Escribe tu nota aquí..." oninput="autoSave()" spellcheck="true"></div>
+
+    <div id="status-bar">
+      <span id="word-count">0 palabras</span>
+      <span id="char-count">0 caracteres</span>
+      <span id="last-saved"></span>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Nueva carpeta -->
+<div class="modal-overlay" id="modal-folder">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">📁 Nueva carpeta</span>
+      <button class="modal-close" onclick="closeModal('modal-folder')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-label">Nombre</div>
+      <input id="folder-name-input" type="text" placeholder="Ej: Trabajo, Personal..." onkeydown="if(event.key==='Enter')saveFolder()"/>
+      <div class="modal-row">
+        <button class="hbtn primary" style="flex:1" onclick="saveFolder()">Crear</button>
+        <button class="hbtn" onclick="closeModal('modal-folder')">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Añadir etiqueta -->
+<div class="modal-overlay" id="modal-tag">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">🏷️ Añadir etiqueta</span>
+      <button class="modal-close" onclick="closeModal('modal-tag')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-label">Etiqueta</div>
+      <input id="tag-name-input" type="text" placeholder="Ej: importante, ideas..." onkeydown="if(event.key==='Enter')addTagToNote()"/>
+      <div id="existing-tags-row" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;"></div>
+      <div class="modal-row">
+        <button class="hbtn primary" style="flex:1" onclick="addTagToNote()">Añadir</button>
+        <button class="hbtn" onclick="closeModal('modal-tag')">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ══ INDEXEDDB ════════════════════════════════════════════════════
+let _idb = null;
+function openIDB() {
+  if (_idb) return Promise.resolve(_idb);
+  return new Promise((res, rej) => {
+    const req = indexedDB.open('mis_notas_db', 1);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('notes')) db.createObjectStore('notes', {keyPath:'id'});
+      if (!db.objectStoreNames.contains('meta')) db.createObjectStore('meta');
+    };
+    req.onsuccess = e => { _idb = e.target.result; res(_idb); };
+    req.onerror = e => rej(e);
+  });
+}
+function idbPut(store, value, key) {
+  return openIDB().then(db => new Promise((res,rej) => {
+    const tx = db.transaction(store,'readwrite');
+    key !== undefined ? tx.objectStore(store).put(value,key) : tx.objectStore(store).put(value);
+    tx.oncomplete = ()=>res();
+    tx.onerror = e=>rej(e);
+  }));
+}
+function idbGet(store, key) {
+  return openIDB().then(db => new Promise((res,rej) => {
+    const tx = db.transaction(store,'readonly');
+    const req = tx.objectStore(store).get(key);
+    req.onsuccess = ()=>res(req.result);
+    req.onerror = e=>rej(e);
+  }));
+}
+function idbGetAll(store) {
+  return openIDB().then(db => new Promise((res,rej) => {
+    const tx = db.transaction(store,'readonly');
+    const req = tx.objectStore(store).getAll();
+    req.onsuccess = ()=>res(req.result);
+    req.onerror = e=>rej(e);
+  }));
+}
+function idbDelete(store, key) {
+  return openIDB().then(db => new Promise((res,rej) => {
+    const tx = db.transaction(store,'readwrite');
+    tx.objectStore(store).delete(key);
+    tx.oncomplete = ()=>res();
+    tx.onerror = e=>rej(e);
+  }));
+}
+
+// ══ STATE ════════════════════════════════════════════════════════
+let notes = [];
+let folders = [];
+let currentNoteId = null;
+let currentFilter = 'all';
+let currentFilterValue = null;
+let autoSaveTimer = null;
+let isDirty = false;
+
+// ══ INIT ═════════════════════════════════════════════════════════
+async function init() {
+  notes = await idbGetAll('notes');
+  folders = (await idbGet('meta','folders')) || [];
+  notes.sort((a,b) => new Date(b.modified) - new Date(a.modified));
+  renderSidebar();
+  renderNoteList();
+  updateCounts();
+}
+
+// ══ SAVE / LOAD ══════════════════════════════════════════════════
+function autoSave() {
+  isDirty = true;
+  document.getElementById('save-status').textContent = '• editando';
+  clearTimeout(autoSaveTimer);
+  updateWordCount();
+  autoSaveTimer = setTimeout(saveCurrentNote, 800);
+}
+
+async function saveCurrentNote() {
+  if (!currentNoteId) return;
+  const note = notes.find(n=>n.id===currentNoteId);
+  if (!note) return;
+  note.title = document.getElementById('note-title-input').value || 'Sin título';
+  note.content = document.getElementById('editor-content').innerHTML;
+  note.folder = document.getElementById('note-folder-sel').value;
+  note.modified = new Date().toISOString();
+  await idbPut('notes', note);
+  isDirty = false;
+  const now = new Date().toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('save-status').textContent = '';
+  document.getElementById('last-saved').textContent = 'Guardado a las ' + now;
+  renderNoteList();
+  updateCounts();
+}
+
+// ══ NEW NOTE ══════════════════════════════════════════════════════
+async function newNote() {
+  const note = {
+    id: Date.now(),
+    title: '',
+    content: '',
+    folder: currentFilter === 'folder' ? currentFilterValue : '',
+    tags: [],
+    starred: false,
+    created: new Date().toISOString(),
+    modified: new Date().toISOString()
+  };
+  notes.unshift(note);
+  await idbPut('notes', note);
+  openNote(note.id);
+  renderNoteList();
+  updateCounts();
+  // On mobile, close note list and show editor
+  document.getElementById('note-list-panel').classList.remove('mobile-open');
+}
+
+// ══ OPEN NOTE ════════════════════════════════════════════════════
+function openNote(id) {
+  if (isDirty) saveCurrentNote();
+  currentNoteId = id;
+  const note = notes.find(n=>n.id===id);
+  if (!note) return;
+
+  document.getElementById('editor-empty').style.display = 'none';
+  document.getElementById('editor-meta').style.display = 'block';
+  document.getElementById('toolbar').style.display = 'flex';
+  document.getElementById('status-bar').style.display = 'flex';
+  document.getElementById('btn-delete-note').style.display = 'block';
+
+  document.getElementById('note-title-input').value = note.title;
+  document.getElementById('editor-content').innerHTML = note.content;
+  document.getElementById('note-date').textContent = formatDate(note.modified);
+  document.getElementById('star-btn').textContent = note.starred ? '⭐' : '☆';
+
+  // Folder select
+  const sel = document.getElementById('note-folder-sel');
+  sel.innerHTML = '<option value="">Sin carpeta</option>' +
+    folders.map(f=>`<option value="${f.id}" ${note.folder===f.id?'selected':''}>${f.name}</option>`).join('');
+
+  renderNoteTags(note);
+  updateWordCount();
+
+  // Active in list
+  document.querySelectorAll('.note-item').forEach(el=>el.classList.toggle('active', +el.dataset.id===id));
+}
+
+// ══ DELETE NOTE ═══════════════════════════════════════════════════
+async function deleteCurrentNote() {
+  if (!currentNoteId || !confirm('¿Eliminar esta nota?')) return;
+  await idbDelete('notes', currentNoteId);
+  notes = notes.filter(n=>n.id!==currentNoteId);
+  currentNoteId = null;
+  document.getElementById('editor-empty').style.display = 'flex';
+  document.getElementById('editor-meta').style.display = 'none';
+  document.getElementById('toolbar').style.display = 'none';
+  document.getElementById('status-bar').style.display = 'none';
+  document.getElementById('btn-delete-note').style.display = 'none';
+  renderNoteList();
+  updateCounts();
+  showToast('Nota eliminada');
+}
+
+// ══ STAR ═════════════════════════════════════════════════════════
+async function toggleStar() {
+  const note = notes.find(n=>n.id===currentNoteId);
+  if (!note) return;
+  note.starred = !note.starred;
+  document.getElementById('star-btn').textContent = note.starred ? '⭐' : '☆';
+  await idbPut('notes', note);
+  updateCounts();
+  renderNoteList();
+}
+
+// ══ FOLDERS ══════════════════════════════════════════════════════
+function newFolder() {
+  document.getElementById('folder-name-input').value = '';
+  openModal('modal-folder');
+  setTimeout(()=>document.getElementById('folder-name-input').focus(), 100);
+}
+async function saveFolder() {
+  const name = document.getElementById('folder-name-input').value.trim();
+  if (!name) return;
+  const folder = { id: 'f'+Date.now(), name };
+  folders.push(folder);
+  await idbPut('meta', folders, 'folders');
+  closeModal('modal-folder');
+  renderSidebar();
+  updateFolderSelects();
+}
+
+// ══ TAGS ═════════════════════════════════════════════════════════
+function promptAddTag() {
+  const allTags = [...new Set(notes.flatMap(n=>n.tags||[]))];
+  const note = notes.find(n=>n.id===currentNoteId);
+  const existing = document.getElementById('existing-tags-row');
+  existing.innerHTML = allTags.filter(t=>!(note.tags||[]).includes(t)).map(t=>
+    `<button onclick="quickAddTag('${t}')" style="font-size:11px;padding:2px 8px;border-radius:10px;border:1px solid var(--border);background:var(--surface-alt);cursor:pointer;font-family:'DM Sans',sans-serif">${t}</button>`
+  ).join('');
+  document.getElementById('tag-name-input').value = '';
+  openModal('modal-tag');
+  setTimeout(()=>document.getElementById('tag-name-input').focus(),100);
+}
+async function addTagToNote() {
+  const tag = document.getElementById('tag-name-input').value.trim().toLowerCase().replace(/\s+/g,'-');
+  if (!tag) return;
+  const note = notes.find(n=>n.id===currentNoteId);
+  if (!note) return;
+  if (!note.tags) note.tags = [];
+  if (!note.tags.includes(tag)) { note.tags.push(tag); }
+  await idbPut('notes', note);
+  renderNoteTags(note);
+  renderSidebar();
+  closeModal('modal-tag');
+}
+async function quickAddTag(tag) {
+  document.getElementById('tag-name-input').value = tag;
+  await addTagToNote();
+}
+async function removeTag(tag) {
+  const note = notes.find(n=>n.id===currentNoteId);
+  if (!note) return;
+  note.tags = (note.tags||[]).filter(t=>t!==tag);
+  await idbPut('notes', note);
+  renderNoteTags(note);
+  renderSidebar();
+}
+function renderNoteTags(note) {
+  const area = document.getElementById('note-tags-area');
+  area.innerHTML = (note.tags||[]).map(t=>
+    `<span class="note-tag" onclick="removeTag('${t}')" title="Clic para quitar">#${t}</span>`
+  ).join('');
+}
+
+// ══ FILTER ═══════════════════════════════════════════════════════
+function setFilter(type, el, value) {
+  currentFilter = type;
+  currentFilterValue = value || null;
+  document.querySelectorAll('.sidebar-item').forEach(b=>b.classList.remove('active'));
+  if(el) el.classList.add('active');
+  document.getElementById('note-list-title').textContent =
+    type==='all'?'Todas las notas':
+    type==='recent'?'Recientes':
+    type==='starred'?'Destacadas':
+    type==='folder'?(folders.find(f=>f.id===value)||{name:''}).name:
+    type==='tag'?'#'+value:'Notas';
+  renderNoteList();
+  // mobile: show note list
+  document.getElementById('note-list-panel').classList.add('mobile-open');
+  document.getElementById('sidebar').classList.remove('mobile-open');
+}
+
+function getFilteredNotes() {
+  const q = document.getElementById('search-notes').value.toLowerCase();
+  let list = [...notes];
+  if (q) list = list.filter(n=>(n.title+' '+stripHTML(n.content)).toLowerCase().includes(q));
+  if (currentFilter==='starred') list = list.filter(n=>n.starred);
+  if (currentFilter==='recent') {
+    const week = Date.now() - 7*24*60*60*1000;
+    list = list.filter(n=>new Date(n.modified)>week);
+  }
+  if (currentFilter==='folder') list = list.filter(n=>n.folder===currentFilterValue);
+  if (currentFilter==='tag') list = list.filter(n=>(n.tags||[]).includes(currentFilterValue));
+  return list.sort((a,b)=>new Date(b.modified)-new Date(a.modified));
+}
+
+// ══ RENDER ═══════════════════════════════════════════════════════
+function renderNoteList() {
+  const filtered = getFilteredNotes();
+  const container = document.getElementById('note-list');
+  const empty = document.getElementById('note-list-empty');
+  if (filtered.length===0) {
+    container.innerHTML='';
+    empty.style.display='block';
+    empty.textContent = notes.length===0?'Crea tu primera nota con el botón ＋':'No se encontraron notas';
+    return;
+  }
+  empty.style.display='none';
+  container.innerHTML = filtered.map(n=>`
+    <div class="note-item ${n.id===currentNoteId?'active':''}" data-id="${n.id}" onclick="openNote(${n.id})">
+      <div class="note-item-title">${n.starred?'⭐ ':''}${escHTML(n.title)||'Sin título'}</div>
+      <div class="note-item-preview">${stripHTML(n.content).slice(0,60)||'—'}</div>
+      <div class="note-item-meta">
+        <span>${formatDate(n.modified)}</span>
+        ${(n.tags||[]).slice(0,2).map(t=>`<span style="color:var(--accent-light)">#${t}</span>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function renderSidebar() {
+  // Folders
+  const fl = document.getElementById('folder-list');
+  fl.innerHTML = folders.map(f=>`
+    <button class="sidebar-item ${currentFilter==='folder'&&currentFilterValue===f.id?'active':''}"
+      onclick="setFilter('folder',this,'${f.id}')">
+      <span class="icon">📁</span>
+      <span class="label">${escHTML(f.name)}</span>
+      <span class="count">${notes.filter(n=>n.folder===f.id).length}</span>
+    </button>`).join('') ||
+    '<div style="padding:6px 12px;font-size:12px;color:var(--text-light)">Sin carpetas</div>';
+
+  // Tags
+  const allTags = [...new Set(notes.flatMap(n=>n.tags||[]))];
+  const tl = document.getElementById('tag-list');
+  tl.innerHTML = allTags.map(t=>`
+    <button class="sidebar-item ${currentFilter==='tag'&&currentFilterValue===t?'active':''}"
+      onclick="setFilter('tag',this,'${t}')">
+      <span class="icon" style="font-size:12px;color:var(--accent-light)">#</span>
+      <span class="label">${t}</span>
+      <span class="count">${notes.filter(n=>(n.tags||[]).includes(t)).length}</span>
+    </button>`).join('') ||
+    '<div style="padding:6px 12px;font-size:12px;color:var(--text-light)">Sin etiquetas</div>';
+
+  updateFolderSelects();
+}
+
+function updateCounts() {
+  document.getElementById('count-all').textContent = notes.length;
+  document.getElementById('count-starred').textContent = notes.filter(n=>n.starred).length;
+}
+
+function updateFolderSelects() {
+  const sel = document.getElementById('note-folder-sel');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Sin carpeta</option>' +
+    folders.map(f=>`<option value="${f.id}" ${cur===f.id?'selected':''}>${f.name}</option>`).join('');
+}
+
+// ══ EDITOR COMMANDS ══════════════════════════════════════════════
+function exec(cmd, val) {
+  document.getElementById('editor-content').focus();
+  document.execCommand(cmd, false, val || null);
+  autoSave();
+}
+function formatBlock(tag) {
+  if (!tag) return;
+  document.getElementById('editor-content').focus();
+  document.execCommand('formatBlock', false, tag);
+  autoSave();
+}
+function insertLink() {
+  const url = prompt('URL del enlace:');
+  if (url) exec('createLink', url);
+}
+
+function updateWordCount() {
+  const text = stripHTML(document.getElementById('editor-content').innerHTML);
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  const chars = text.length;
+  document.getElementById('word-count').textContent = words + ' palabra' + (words!==1?'s':'');
+  document.getElementById('char-count').textContent = chars + ' carácter' + (chars!==1?'es':'');
+}
+
+// ══ EXPORT ═══════════════════════════════════════════════════════
+function toggleExportMenu() {
+  document.getElementById('export-menu').classList.toggle('open');
+}
+document.addEventListener('click', e=>{
+  const menu = document.getElementById('export-menu');
+  const btn = document.getElementById('btn-export');
+  if (!menu.contains(e.target) && !btn.contains(e.target)) menu.classList.remove('open');
+});
+
+function exportAs(format) {
+  document.getElementById('export-menu').classList.remove('open');
+  const note = notes.find(n=>n.id===currentNoteId);
+  if (!note) { showToast('Abre una nota primero'); return; }
+  const title = note.title || 'nota';
+  const content = note.content;
+
+  if (format==='txt') {
+    const text = stripHTML(content);
+    download(title+'.txt', text, 'text/plain');
+  } else if (format==='html') {
+    const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>${escHTML(title)}</title>
+<style>body{font-family:Georgia,serif;max-width:700px;margin:40px auto;padding:20px;line-height:1.8;color:#1e1e1e}
+h1,h2,h3{font-family:Georgia,serif}blockquote{border-left:3px solid #6a9e7f;padding:6px 14px;background:#e8f2ec;margin:8px 0}</style>
+</head><body><h1>${escHTML(title)}</h1>${content}</body></html>`;
+    download(title+'.html', html, 'text/html');
+  } else if (format==='md') {
+    let md = '# ' + title + '\n\n';
+    md += htmlToMarkdown(content);
+    download(title+'.md', md, 'text/markdown');
+  } else if (format==='pdf') {
+    const win = window.open('','_blank');
+    win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${escHTML(title)}</title>
+<style>body{font-family:Georgia,serif;max-width:700px;margin:40px auto;padding:20px;line-height:1.8}
+@media print{body{margin:0}}</style></head><body>
+<h1>${escHTML(title)}</h1>${content}</body></html>`);
+    win.document.close();
+    win.focus();
+    setTimeout(()=>win.print(), 500);
+  }
+}
+
+function download(filename, content, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content],{type}));
+  a.download = filename;
+  a.click();
+}
+
+function htmlToMarkdown(html) {
+  return html
+    .replace(/<h1[^>]*>(.*?)<\/h1>/gi,'# $1\n\n')
+    .replace(/<h2[^>]*>(.*?)<\/h2>/gi,'## $1\n\n')
+    .replace(/<h3[^>]*>(.*?)<\/h3>/gi,'### $1\n\n')
+    .replace(/<strong[^>]*>(.*?)<\/strong>/gi,'**$1**')
+    .replace(/<b[^>]*>(.*?)<\/b>/gi,'**$1**')
+    .replace(/<em[^>]*>(.*?)<\/em>/gi,'*$1*')
+    .replace(/<i[^>]*>(.*?)<\/i>/gi,'*$1*')
+    .replace(/<li[^>]*>(.*?)<\/li>/gi,'- $1\n')
+    .replace(/<br\s*\/?>/gi,'\n')
+    .replace(/<p[^>]*>(.*?)<\/p>/gi,'$1\n\n')
+    .replace(/<[^>]+>/g,'')
+    .replace(/&nbsp;/g,' ')
+    .replace(/&amp;/g,'&')
+    .replace(/&lt;/g,'<')
+    .replace(/&gt;/g,'>');
+}
+
+// ══ MOBILE ═══════════════════════════════════════════════════════
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('mobile-open');
+}
+document.getElementById('sidebar').addEventListener('click', e=>{
+  if(window.innerWidth<=700 && e.target.closest('.sidebar-item')) {
+    document.getElementById('sidebar').classList.remove('mobile-open');
+  }
+});
+
+// ══ MODALS ═══════════════════════════════════════════════════════
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(el=>{
+  el.addEventListener('click',e=>{ if(e.target===el) el.classList.remove('open'); });
+});
+
+// ══ UTILS ════════════════════════════════════════════════════════
+function stripHTML(html) {
+  const d = document.createElement('div'); d.innerHTML=html; return d.textContent||'';
+}
+function escHTML(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function formatDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const now = new Date();
+  const diff = now - d;
+  if (diff < 60000) return 'Ahora mismo';
+  if (diff < 3600000) return Math.floor(diff/60000) + ' min';
+  if (diff < 86400000) return Math.floor(diff/3600000) + 'h';
+  if (diff < 604800000) return Math.floor(diff/86400000) + 'd';
+  return d.toLocaleDateString('es',{day:'numeric',month:'short'});
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.opacity = '1';
+  clearTimeout(t._t);
+  t._t = setTimeout(()=>t.style.opacity='0', 2500);
+}
+
+// ══ START ════════════════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>
